@@ -77,6 +77,7 @@
     const services = await response.json();
     let ret = {};
     services.entries.forEach(function(r) {
+      if (r.text.includes('---')) return;
       ret[r.uuid] = { "name": r.text, "priority": r.params[0].value };
     });
     return ret;
@@ -90,6 +91,18 @@
       ret[r.networkname] = r;
     });
     return ret;
+  }
+
+  async function get_profile() {
+    const rec_prof = await get_raw(cookies.UUID);
+    const stream_prof = await get_raw(rec_prof[0].profile);
+    return stream_prof[0];
+  }
+
+  async function get_raw(uuid) {
+    const response = await fetch(`/api/raw/export?uuid=${uuid}`);
+    const raw = await response.json();
+    return raw;
   }
 
   async function get_tuners() {
@@ -119,7 +132,7 @@
     var autorecs, status, running, run_time = 0;
     [ timers, autorecs ] = await Promise.all([get_timers(), get_autorecs()]);
     if (cookies.CLASHDET != "0") {
-      [ channels, services, networks, tuners ] = await Promise.all([get_channels(), get_services(), get_networks(), get_tuners()]);
+      [ channels, services, networks, tuners, profile ] = await Promise.all([get_channels(), get_services(), get_networks(), get_tuners(), get_profile()]);
     }
     var now = new Date() / 1000;
     var table = document.getElementById("list");
@@ -187,6 +200,6 @@
     }
   }
 
-  var channels = {}, services = {}, timers = {}, tuners = {}, networks = {}, debug = '';
+  var channels = {}, services = {}, timers = {}, tuners = {}, networks = {}, profile = {}, debug = '';
   main();
 
