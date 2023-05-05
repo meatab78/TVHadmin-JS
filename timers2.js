@@ -73,12 +73,12 @@
   }
 
   async function get_services() {
-    const response = await fetch("/api/service/list?list=priority");
+    const response = await fetch("/api/service/list?list=priority,dvb_servicetype");
     const services = await response.json();
     let ret = {};
     services.entries.forEach(function(r) {
       if (r.text.includes('---')) return;
-      ret[r.uuid] = { "name": r.text, "priority": r.params[0].value };
+      ret[r.uuid] = { "name": r.text, "priority": r.params[0].value, "type": r.params[1].value };
     });
     return ret;
   }
