@@ -13,6 +13,8 @@
       if (svc.startsWith('---')) continue;
       let n = networks[net];
       if (!n.enabled) continue;
+      let svtype = 0;
+      if (services[s].type < 0x21) svtype = svtypes[services[s].type];
       if ('priority' in n) {	// IPTV (or SAT>IP?)
         const prio = services[s].priority + n.priority;
         if (prio > best.priority) {
@@ -34,7 +36,8 @@
             return 1;
           }
           if (timer.start_real > tuners[u].alloc) {   // available
-            const prio = services[s].priority + tuners[u].priority;
+            let prio = services[s].priority + tuners[u].priority;
+            if (profile.svfilter == svtype) prio += 100;	// Preferred service type
             if (prio > best.priority) {
               best.priority = prio;
               best.tuner = u;
@@ -201,5 +204,9 @@
   }
 
   var channels = {}, services = {}, timers = {}, tuners = {}, networks = {}, profile = {}, debug = '';
-  main();
+  const svtypes = [ 0, 1, 0, 0, 1, 1, 0, 0,	// 0x00 - 0x07
+		0, 0, 0, 0, 0, 0, 0, 0,		// 0x08 - 0x0F
+		0, 3, 0, 0, 0, 0, 1, 1,		// 0x10 - 0x17
+		1, 3, 3, 3, 3, 3, 3, 3, 4 ];	// 0x18 - 0x20
 
+  main();
