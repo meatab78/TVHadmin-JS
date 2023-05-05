@@ -6,7 +6,7 @@
       - FIXME - IPTV muxes with multiple services? SAT>IP?
 */
   function find_tuner(timer) {
-    var best = { "tuner": '', "mux": '', "priority": -999, "dup": 0 };
+    var best = { "tuner": '', "mux": '', "priority": -999, "dup": 0, "ret": 0 };
     var ch = channels.findIndex(c => c["uuid"] === timer.channel);
     for (const s of channels[ch].services) {
       const [net, mux, svc] = services[s].name.split('/');
@@ -30,23 +30,23 @@
       else {
         for (const u in tuners) {
           if (tuners[u].network != net) continue;
-          if ((timer.start_real <= tuners[u].alloc) && (tuners[u].mux == mux)) {   // Use existing
-            debug += "\nUse existing recording tuner " + u;
-            alloc_tuner(u, timer, mux);
-            return 1;
+          if ((timer.start_real <= tuners[u].alloc) && (tuners[u].mux != mux)) continue;   // Busy
+          let prio = services[s].priority + tuners[u].priority;
+          if (profile.svfilter == svtype) prio += 100;	// Preferred service type
+          let ret = 0;
+          if ((timer.start_real <= tuners[u].alloc) && (tuners[u].mux == mux)) {
+            prio += 50;
+            ret = 1;
           }
-          if (timer.start_real > tuners[u].alloc) {   // available
-            let prio = services[s].priority + tuners[u].priority;
-            if (profile.svfilter == svtype) prio += 100;	// Preferred service type
-            if (prio > best.priority) {
-              best.priority = prio;
-              best.tuner = u;
-              best.mux = mux;
-              best.dup = 0;
-            }
-            else if (prio == best.priority) {
-              best.dup++;
-            }
+          if (prio > best.priority) {
+            best.priority = prio;
+            best.tuner = u;
+            best.mux = mux;
+            best.dup = 0;
+            best.ret = ret;
+          }
+          else if (prio == best.priority) {
+            best.dup++;
           }
         }
       }
@@ -55,7 +55,7 @@
       if (best.dup == 0) {
         debug += `\n${best.tuner} service ${best.mux}`;
         alloc_tuner(best.tuner, timer, best.mux);
-        return 0;
+        return best.ret;
       }
       else {
         debug += `\n${best.tuner} has duplicate priority`;
