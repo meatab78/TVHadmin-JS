@@ -1,9 +1,10 @@
 
 /*
     Allocate a source (tuner or IPTV network) to a timer following TVH rules:
+      - If "Preferred service video type" is set, prefer service with the same service type.
       - If a tuner is already set to the same mux as a service providing the channel, use that.
       - Otherwise use the source / service combination with the highest aggregate priority.
-      - FIXME - IPTV muxes with multiple services? SAT>IP?
+      - FIXME - Untested - IPTV muxes with multiple services, SAT>IP
 */
   function find_tuner(timer) {
     var best = { "tuner": '', "mux": '', "priority": -999, "dup": 0, "ret": 0 };
